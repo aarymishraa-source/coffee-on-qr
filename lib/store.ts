@@ -1,6 +1,9 @@
+"use client";
+
 // Single shared Zustand store — both /app and /console (and /demo, which
 // renders them side by side) read and write this same state. See CLAUDE.md
 // §2 and §8.
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -414,4 +417,19 @@ export const useStore = create<StoreState>()(
 
 export function readingsAsTempReadings(batch: BatchState): TempReading[] {
   return batch.readings.map((reading) => ({ at: new Date(reading.atMs), temp: reading.temp }));
+}
+
+/**
+ * Forces a re-render every `intervalMs` so anything reading `useStore.getState().now()`
+ * (countdowns, "window left" labels) stays live without storing a ticking
+ * value in the persisted state itself.
+ */
+export function useLiveNow(intervalMs = 1000): Date {
+  const nowFn = useStore((s) => s.now);
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => forceTick((t) => t + 1), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return nowFn();
 }

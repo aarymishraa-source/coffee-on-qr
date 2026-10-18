@@ -312,6 +312,17 @@ export const RIYA_PROFILE = {
   brewPoints: 340,
 };
 
+/**
+ * Before any taste swipes, "Picked for you" leads with these three dishes
+ * at these percentages — matching the design mockup exactly. See
+ * rankDishesForDisplay() in lib/match.ts for how/when this applies.
+ */
+export const FEATURED_PICKS_DEFAULT = [
+  { dishId: "pesto-paneer-sandwich", display: 96 },
+  { dishId: "iced-latte", display: 91 },
+  { dishId: "blueberry-muffin", display: 84 },
+];
+
 // ---------------------------------------------------------------------------
 // Console KPI baselines — "today so far" before the demo's live actions.
 // ---------------------------------------------------------------------------
