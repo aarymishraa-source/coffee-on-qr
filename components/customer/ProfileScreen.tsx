@@ -33,7 +33,7 @@ export function ProfileScreen() {
 
       <div className="flex items-center justify-between rounded-2xl bg-espresso p-4 text-oat">
         <div>
-          <MonoLabel className="text-matcha">BREW POINTS</MonoLabel>
+          <span className="mono-label text-matcha">BREW POINTS</span>
           <p className="font-display text-3xl font-extrabold">{profile.brewPoints}</p>
         </div>
         <p className="max-w-[9rem] text-right text-xs text-oat/70">Earn points on every reservation.</p>

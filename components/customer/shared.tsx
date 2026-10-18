@@ -202,3 +202,20 @@ export function IconButton({
     </button>
   );
 }
+
+/** App logo tile as drawn in the design: forest rounded square with a matcha-outlined rounded "S". */
+export function LogoTile({ size = 36 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 34 34" aria-hidden="true" className="shrink-0">
+      <rect width="34" height="34" rx="10" fill="#2E4A2C" />
+      <rect x="8.5" y="7" width="17" height="20" rx="6" fill="none" stroke="#A8C47A" strokeWidth="2.4" />
+      <path
+        d="M19.5 11.5c-1.2-1-4.6-1-4.6 1.4 0 2.6 4.4 1.6 4.4 4.3 0 2.2-3.3 2.4-4.8 1.2"
+        fill="none"
+        stroke="#A8C47A"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

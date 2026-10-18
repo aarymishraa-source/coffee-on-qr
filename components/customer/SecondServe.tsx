@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Check, Tag, ShieldCheck } from "lucide-react";
-import { MonoLabel } from "@/components/ui/MonoLabel";
 import { Sandwich } from "@/components/illustrations/Food";
 import { DISH_BY_ID, INGREDIENT_BY_ID } from "@/lib/seed";
 import { useLiveNow, useStore } from "@/lib/store";
@@ -63,7 +62,7 @@ export function SecondServe({ onManage, onViewOrder }: SecondServeProps) {
           </span>
           <h1 className="font-display text-[1.45rem] font-extrabold">Second Serve</h1>
         </div>
-        {offer && <MonoLabel className="text-matcha">1 NEW</MonoLabel>}
+        {offer && <span className="mono-label text-matcha">1 NEW</span>}
       </header>
 
       {offer && dish ? (
@@ -132,7 +131,7 @@ export function SecondServe({ onManage, onViewOrder }: SecondServeProps) {
 
       {offer && (
         <div className="mt-6">
-          <MonoLabel className="text-matcha">WHY YOU&apos;RE SEEING THIS</MonoLabel>
+          <span className="mono-label text-matcha">WHY YOU&apos;RE SEEING THIS</span>
           <ul className="mt-3 flex flex-col gap-2.5 text-sm">
             <li className="flex gap-2.5">
               <Check size={17} className="shrink-0 text-matcha" aria-hidden="true" />

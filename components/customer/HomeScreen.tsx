@@ -1,13 +1,12 @@
 "use client";
 
 import { ArrowRight, MapPin, Tag } from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
 import { MonoLabel } from "@/components/ui/MonoLabel";
 import { CAFES, DISHES, DISH_BY_ID, RIYA_PROFILE, SWIPEABLE_INGREDIENT_IDS } from "@/lib/seed";
 import { useLiveNow, useStore } from "@/lib/store";
 import { offerPrice } from "@/lib/selectors";
 import { formatClock, formatRupees } from "@/lib/format";
-import { getLiveOffer } from "./shared";
+import { LogoTile, getLiveOffer } from "./shared";
 
 interface HomeScreenProps {
   onContinueTaste: () => void;
@@ -30,7 +29,7 @@ export function HomeScreen({ onContinueTaste, onSeeMatches, onOpenOffers }: Home
   return (
     <div className="flex flex-col gap-4 px-5 pb-6">
       <header className="flex items-center gap-2.5">
-        <Logo withWordmark={false} size={34} />
+        <LogoTile />
         <div className="leading-tight">
           <p className="text-xs text-muted">{greeting}</p>
           <p className="text-sm font-semibold">{RIYA_PROFILE.name}</p>
@@ -48,7 +47,7 @@ export function HomeScreen({ onContinueTaste, onSeeMatches, onOpenOffers }: Home
         onClick={done >= total ? onSeeMatches : onContinueTaste}
         className="rounded-3xl bg-forest p-5 text-left text-oat focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
       >
-        <MonoLabel className="text-matcha">TASTE MATCH</MonoLabel>
+        <span className="mono-label text-matcha">TASTE MATCH</span>
         <p className="font-display mt-2 text-xl font-extrabold">
           {done >= total ? "Your taste profile is ready" : "Continue your taste profile"}
         </p>
@@ -75,7 +74,7 @@ export function HomeScreen({ onContinueTaste, onSeeMatches, onOpenOffers }: Home
             <Tag size={18} />
           </span>
           <span className="flex-1 leading-tight">
-            <MonoLabel className="text-matcha">SECOND SERVE · 1 NEW</MonoLabel>
+            <span className="mono-label text-matcha">SECOND SERVE · 1 NEW</span>
             <span className="mt-1 block font-semibold">
               {offerDish.name} · {offer.discountPct}% off · {formatRupees(offerPrice(offer))}
             </span>

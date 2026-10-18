@@ -9,12 +9,10 @@ import {
   type PanInfo,
 } from "framer-motion";
 import { Heart, SlidersHorizontal, X, ArrowRight, Sparkles } from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
-import { MonoLabel } from "@/components/ui/MonoLabel";
 import { LeafCircle } from "@/components/illustrations/Food";
 import { CAFES, INGREDIENT_BY_ID, SWIPEABLE_INGREDIENT_IDS, type Ingredient } from "@/lib/seed";
 import { useStore, type SwipeDirection } from "@/lib/store";
-import { IconButton } from "./shared";
+import { IconButton, LogoTile } from "./shared";
 
 const MIN_SWIPES_FOR_MATCHES = 5;
 
@@ -43,7 +41,7 @@ export function TasteSwipe({ onSeeMatches }: TasteSwipeProps) {
     <div className="flex h-full flex-col px-5 pb-3">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <Logo withWordmark={false} size={34} />
+          <LogoTile />
           <div className="leading-tight">
             <p className="text-xs text-muted">Good evening</p>
             <p className="text-sm font-semibold">{openCafes} cafés open near you</p>
@@ -132,7 +130,7 @@ export function TasteSwipe({ onSeeMatches }: TasteSwipeProps) {
         </button>
       </div>
 
-      <div className="mt-3 flex h-9 items-center justify-center">
+      <div className="mt-2 flex h-9 items-center justify-center">
         {(count >= MIN_SWIPES_FOR_MATCHES || !top) && (
           <motion.button
             type="button"
@@ -144,6 +142,11 @@ export function TasteSwipe({ onSeeMatches }: TasteSwipeProps) {
             See my matches <ArrowRight size={15} />
           </motion.button>
         )}
+        {count < MIN_SWIPES_FOR_MATCHES && top && (
+          <p className="text-xs text-muted">
+            Swipe {MIN_SWIPES_FOR_MATCHES - count} more to see your matches
+          </p>
+        )}
       </div>
     </div>
   );
@@ -153,7 +156,7 @@ function IngredientCardFace({ ingredient }: { ingredient: Ingredient }) {
   return (
     <div className="flex h-full flex-col rounded-3xl bg-forest p-5 text-oat shadow-[0_12px_30px_-12px_rgba(24,33,26,0.45)]">
       <div className="flex items-center justify-between">
-        <MonoLabel className="text-matcha">INGREDIENT</MonoLabel>
+        <span className="mono-label text-matcha">INGREDIENT</span>
         <span className="rounded-full bg-oat/10 px-2.5 py-1 text-xs">
           {ingredient.diet === "veg" ? "Veg" : "Non-veg"}
         </span>
@@ -161,7 +164,7 @@ function IngredientCardFace({ ingredient }: { ingredient: Ingredient }) {
       <div className="flex min-h-0 flex-1 items-center justify-center py-3">
         <LeafCircle className="h-full max-h-[190px] w-auto" />
       </div>
-      <h2 className="font-display text-[2.1rem] font-extrabold leading-none">{ingredient.name}</h2>
+      <h2 className="font-display text-[2.5rem] font-extrabold leading-none">{ingredient.name}</h2>
       <p className="mt-2 text-sm text-oat/75">{ingredient.notes.join(" · ")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full border border-oat/25 px-2.5 py-1 text-xs">
@@ -218,6 +221,7 @@ function SwipeCard({ ingredient, onDecide, flyRef }: SwipeCardProps) {
 
   return (
     <motion.div
+      data-swipe-card
       className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
       style={{ x, y, rotate, opacity }}
       drag="x"

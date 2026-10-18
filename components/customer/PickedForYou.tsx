@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, Map as MapIcon } from "lucide-react";
 import { MonoLabel } from "@/components/ui/MonoLabel";
 import { Chip } from "@/components/ui/Chip";
-import { CAFE_BY_ID, DISHES, FEATURED_PICKS_DEFAULT } from "@/lib/seed";
+import { CAFE_BY_ID, DISHES, FEATURED_PICKS_DEFAULT, INGREDIENT_BY_ID } from "@/lib/seed";
 import { rankDishesForDisplay, type RankedDish } from "@/lib/match";
 import { useStore } from "@/lib/store";
 import { formatRupees } from "@/lib/format";
@@ -88,7 +88,7 @@ export function PickedForYou({ onBack, onOpenDish, onOpenMap }: PickedForYouProp
               exit={{ opacity: 0, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 34 }}
             >
-              <DishRow dish={dish} onOpen={() => onOpenDish(dish.id)} />
+              <DishRow dish={dish} liked={profile.likedIngredientIds} onOpen={() => onOpenDish(dish.id)} />
             </motion.li>
           ))}
         </AnimatePresence>
@@ -100,7 +100,18 @@ export function PickedForYou({ onBack, onOpenDish, onOpenMap }: PickedForYouProp
   );
 }
 
-function DishRow({ dish, onOpen }: { dish: RankedDish; onOpen: () => void }) {
+// The design's "why" line names at most two liked ingredients, lower-case mid-sentence
+// ("Because you liked basil pesto and paneer"). Curated lines (whyOverride) pass through.
+function whyLine(dish: RankedDish, liked: string[]): string {
+  if (dish.whyOverride) return dish.whyOverride;
+  const names = dish.ingredientIds
+    .filter((id) => liked.includes(id))
+    .slice(0, 2)
+    .map((id) => (INGREDIENT_BY_ID[id]?.name ?? id).toLowerCase());
+  return names.length ? `Because you liked ${names.join(" and ")}` : dish.match.why;
+}
+
+function DishRow({ dish, liked, onOpen }: { dish: RankedDish; liked: string[]; onOpen: () => void }) {
   const soldOut = dish.stock === "sold-out";
   return (
     <button
@@ -121,7 +132,7 @@ function DishRow({ dish, onOpen }: { dish: RankedDish; onOpen: () => void }) {
           <p className="font-display text-lg font-bold leading-none">{formatRupees(dish.price)}</p>
         </div>
         <p className="mt-1 text-xs text-muted">{cafeLine(dish)}</p>
-        <p className="mt-1 text-xs leading-snug text-forest">{dish.match.why}</p>
+        <p className="mt-1 text-xs leading-snug text-forest">{whyLine(dish, liked)}</p>
         {dish.allergenWarning && (
           <p className="mt-1 text-[11px] leading-snug text-crema">{dish.allergenWarning}</p>
         )}
