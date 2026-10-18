@@ -433,3 +433,22 @@ export function useLiveNow(intervalMs = 1000): Date {
   }, [intervalMs]);
   return nowFn();
 }
+
+const STORE_PERSIST_KEY = "coffee-on-qr-demo";
+
+/**
+ * Keeps this tab's store in sync when another tab/window writes to the same
+ * localStorage key — e.g. /app and /console open side by side. Each tab's
+ * own zustand instance only updates its state when IT calls set(); a write
+ * from elsewhere only reaches us via the browser's `storage` event, which
+ * we use to pull the latest persisted snapshot back in.
+ */
+export function useCrossTabSync() {
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORE_PERSIST_KEY) void useStore.persist.rehydrate();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+}

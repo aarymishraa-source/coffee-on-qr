@@ -12,7 +12,7 @@ import { ForecastChart } from "@/components/console/ForecastChart";
 import { LoopStrip } from "@/components/console/LoopStrip";
 import { AuditLog } from "@/components/console/AuditLog";
 import { ComingInPilot } from "@/components/console/ComingInPilot";
-import { useLiveNow, useStore } from "@/lib/store";
+import { useCrossTabSync, useLiveNow, useStore } from "@/lib/store";
 import { getConsoleKpis, pendingOffersNeedingAttention } from "@/lib/selectors";
 
 const TAB_TITLES: Record<ConsoleTab, string> = {
@@ -29,6 +29,7 @@ export function ConsoleView() {
   const [activeTab, setActiveTab] = useState<ConsoleTab>("today");
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
+  useCrossTabSync();
   const now = useLiveNow();
   const batches = useStore((s) => s.batches);
   const offers = useStore((s) => s.offers);
