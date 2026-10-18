@@ -25,7 +25,12 @@ const TAB_TITLES: Record<ConsoleTab, string> = {
   audit: "Audit log",
 };
 
-export function ConsoleView() {
+interface ConsoleViewProps {
+  /** Renders to fill its parent instead of the viewport — used by /demo, which sizes and scales this itself. */
+  embedded?: boolean;
+}
+
+export function ConsoleView({ embedded = false }: ConsoleViewProps) {
   const [activeTab, setActiveTab] = useState<ConsoleTab>("today");
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
@@ -41,7 +46,7 @@ export function ConsoleView() {
   const selectedBatch = selectedBatchId ? batches[selectedBatchId] : null;
 
   return (
-    <div className="flex min-h-screen bg-paper">
+    <div className={`flex bg-paper ${embedded ? "h-full" : "min-h-screen"}`}>
       <Sidebar active={activeTab} onSelect={setActiveTab} />
 
       <main className="flex-1 overflow-y-auto p-6 md:p-10">
