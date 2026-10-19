@@ -17,6 +17,7 @@ import { MonoLabel } from "@/components/ui/MonoLabel";
 import { formatMinutesShort, formatTemp } from "@/lib/format";
 import { getBatchThermal } from "@/lib/selectors";
 import { THERMAL_LIMIT_C } from "@/lib/thermal";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import type { BatchState } from "@/lib/store";
 
 function hourLabel(ms: number): string {
@@ -36,6 +37,7 @@ interface BatchHistoryProps {
 }
 
 export function BatchHistory({ batch, now, onClose }: BatchHistoryProps) {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const thermal = batch ? getBatchThermal(batch, now) : null;
   const points = batch
     ? batch.readings.map((r) => ({ ms: r.atMs, label: hourLabel(r.atMs), temp: r.temp }))
@@ -57,12 +59,17 @@ export function BatchHistory({ batch, now, onClose }: BatchHistoryProps) {
           />
           <motion.div
             key="panel"
-            className="fixed right-0 top-0 z-40 h-full w-full max-w-md overflow-y-auto bg-oat p-6 shadow-2xl"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            className={
+              isDesktop
+                ? "fixed right-0 top-0 z-40 h-full w-full max-w-md overflow-y-auto bg-oat p-6 shadow-2xl"
+                : "fixed inset-x-0 bottom-0 z-40 max-h-[90dvh] overflow-y-auto rounded-t-3xl bg-oat p-5 pb-8 shadow-2xl"
+            }
+            initial={isDesktop ? { x: "100%" } : { y: "100%" }}
+            animate={isDesktop ? { x: 0 } : { y: 0 }}
+            exit={isDesktop ? { x: "100%" } : { y: "100%" }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
+            {!isDesktop && <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" aria-hidden="true" />}
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-xl font-bold">{batch.name}</h2>
@@ -74,7 +81,7 @@ export function BatchHistory({ batch, now, onClose }: BatchHistoryProps) {
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-signal/15 text-signal transition-colors hover:bg-signal/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-signal/15 text-signal transition-colors hover:bg-signal/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest max-xl:h-11 max-xl:w-11"
               >
                 <X size={16} aria-hidden="true" />
               </button>

@@ -8,9 +8,15 @@ interface PhoneFrameProps {
   embedded?: boolean;
 }
 
+// Below this width the phone frame disappears and the app fills the real
+// device screen. At/above it we show a centred frame that fits the window
+// (sized via the [data-phone-frame] rule in globals.css).
+const FRAME_BREAKPOINT = "min-[600px]:";
+
 /**
- * Centred phone frame (~390×844) on desktop. On a real phone viewport the
- * frame chrome disappears and the screen fills the device — see CLAUDE.md §4.
+ * Centred phone frame (~390×844) on tablet/desktop, scaled down to fit a
+ * shorter window. On a real phone viewport (<600px) the frame chrome
+ * disappears and the screen fills the device — see CLAUDE.md §4.
  */
 export function PhoneFrame({ children, bare = false, embedded = false }: PhoneFrameProps) {
   if (bare) {
@@ -18,19 +24,22 @@ export function PhoneFrame({ children, bare = false, embedded = false }: PhoneFr
   }
 
   const frame = (
-    <div className="relative h-screen w-full overflow-hidden bg-oat md:h-[844px] md:w-[390px] md:rounded-[2.75rem] md:border-[6px] md:border-espresso md:shadow-2xl">
+    <div
+      data-phone-frame
+      className={`relative h-screen-safe w-full overflow-hidden bg-oat ${FRAME_BREAKPOINT}rounded-[2.75rem] ${FRAME_BREAKPOINT}border-[6px] ${FRAME_BREAKPOINT}border-espresso ${FRAME_BREAKPOINT}shadow-2xl`}
+    >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-0 z-20 hidden h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-espresso md:block"
+        className={`pointer-events-none absolute left-1/2 top-0 z-20 hidden h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-espresso ${FRAME_BREAKPOINT}block`}
       />
-      <div className="h-full w-full overflow-y-auto">{children}</div>
+      <div className="h-full w-full overflow-y-auto overscroll-contain">{children}</div>
     </div>
   );
 
   if (embedded) return frame;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-paper md:py-10">
+    <div className={`min-h-screen-safe w-full flex items-center justify-center bg-paper ${FRAME_BREAKPOINT}py-8`}>
       {frame}
     </div>
   );

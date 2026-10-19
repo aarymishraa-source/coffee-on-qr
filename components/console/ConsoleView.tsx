@@ -46,16 +46,16 @@ export function ConsoleView({ embedded = false }: ConsoleViewProps) {
   const selectedBatch = selectedBatchId ? batches[selectedBatchId] : null;
 
   return (
-    <div className={`flex bg-paper ${embedded ? "h-full" : "min-h-screen"}`}>
+    <div className={`flex flex-col bg-paper lg:flex-row ${embedded ? "h-full" : "min-h-screen-safe"}`}>
       <Sidebar active={activeTab} onSelect={setActiveTab} />
 
-      <main className="flex-1 overflow-y-auto p-6 md:p-10">
+      <main className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-10">
         {activeTab === "today" ? (
           <div className="flex flex-col gap-6">
             <ConsoleHeader now={now} pendingCount={pendingCount} />
             <KpiRow kpis={kpis} />
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
               <ThermalTable
                 batches={batchList}
                 now={now}

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { HelpCircle, RotateCcw } from "lucide-react";
+import { HelpCircle, RotateCcw, Smartphone, LayoutGrid } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { PhoneFrame } from "@/components/ui/PhoneFrame";
 import { CustomerApp } from "@/components/customer/CustomerApp";
 import { ConsoleView } from "@/components/console/ConsoleView";
@@ -12,11 +13,13 @@ import { ScaledPanel } from "@/components/demo/ScaledPanel";
 import { useLiveNow, useStore } from "@/lib/store";
 import { canApproveOffer, getBatchThermal } from "@/lib/selectors";
 import { formatClock } from "@/lib/format";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 
 const CONSOLE_DESIGN_WIDTH = 1280;
 const CONSOLE_DESIGN_HEIGHT = 1320;
 
 type PulseDirection = "toPhone" | "toConsole";
+type MobileSide = "app" | "console";
 
 function isTypingTarget(el: EventTarget | null): boolean {
   if (!(el instanceof HTMLElement)) return false;
@@ -29,7 +32,13 @@ export function DemoView() {
   const [resetKey, setResetKey] = useState(0);
   const [pulse, setPulse] = useState<{ id: number; direction: PulseDirection } | null>(null);
   const [showLegend, setShowLegend] = useState(false);
+  const [mobileSide, setMobileSide] = useState<MobileSide>("app");
   const pulseCounter = useRef(0);
+
+  // ≥1280px: the full scaled side-by-side recording layout (unchanged from
+  // before). Below that there isn't room for both at a usable size, so we
+  // show one side at a time via a toggle instead.
+  const isSplitView = useMediaQuery("(min-width: 1280px)");
 
   const triggerPulse = useCallback((direction: PulseDirection) => {
     pulseCounter.current += 1;
@@ -87,25 +96,25 @@ export function DemoView() {
   }, [handleReset, handleFastForward, handleApprove]);
 
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-paper">
+    <div className="relative flex h-screen-safe w-screen flex-col overflow-hidden bg-paper">
       {/* Top bar */}
-      <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-6">
-        <div className="flex items-center gap-4">
-          <Logo size={28} onDark={false} />
-          <span className="mono-label text-muted">Live demo · demo data</span>
+      <div className="flex h-16 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line px-4 sm:px-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Logo size={28} onDark={false} withWordmark={isSplitView} />
+          <span className="mono-label hidden text-muted sm:inline">Live demo · demo data</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-sm text-muted">{formatClock(now)}</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="hidden font-mono text-sm text-muted sm:inline">{formatClock(now)}</span>
           <Button variant="outline" size="sm" onClick={handleReset}>
             <RotateCcw size={14} aria-hidden="true" />
-            Reset demo
+            <span className="hidden sm:inline">Reset demo</span>
           </Button>
           <div className="relative">
             <button
               type="button"
               aria-label="Keyboard shortcuts"
               onClick={() => setShowLegend((v) => !v)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted transition-colors hover:bg-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest max-xl:h-11 max-xl:w-11"
             >
               <HelpCircle size={15} aria-hidden="true" />
             </button>
@@ -139,25 +148,88 @@ export function DemoView() {
         </div>
       </div>
 
-      {/* Phone + console */}
+      {/* Below 1280px: a toggle between the two sides, one shown at a time. */}
+      {!isSplitView && (
+        <div className="flex shrink-0 flex-col gap-2 border-b border-line bg-oat px-4 py-2.5 sm:px-6">
+          <div className="flex items-center gap-2">
+            <Chip
+              touchSize="always"
+              active={mobileSide === "app"}
+              onClick={() => setMobileSide("app")}
+              icon={<Smartphone size={14} aria-hidden="true" />}
+            >
+              Customer app
+            </Chip>
+            <Chip
+              touchSize="always"
+              active={mobileSide === "console"}
+              onClick={() => setMobileSide("console")}
+              icon={<LayoutGrid size={14} aria-hidden="true" />}
+            >
+              Café console
+            </Chip>
+          </div>
+          <p className="text-xs text-muted">Best viewed on a laptop for the full split-screen demo.</p>
+        </div>
+      )}
+
+      {/* Phone + console — both stay mounted at all times (even when hidden
+          by the toggle below 1280px) so the store, the WhatsApp banner and
+          the cross-over pulse all keep working regardless of which side is
+          visible. */}
       <div className="relative flex min-h-0 flex-1">
-        <div className="flex w-[34%] shrink-0 items-center justify-center py-6">
-          <PhoneFrame embedded key={`phone-${resetKey}`}>
-            <CustomerApp />
-          </PhoneFrame>
+        <div
+          className={
+            isSplitView
+              ? "flex w-[34%] shrink-0 items-center justify-center py-6"
+              : mobileSide === "app"
+                ? "flex min-h-0 flex-1 justify-center overflow-hidden"
+                : "hidden"
+          }
+        >
+          {isSplitView ? (
+            <PhoneFrame embedded key={`phone-${resetKey}`}>
+              <CustomerApp />
+            </PhoneFrame>
+          ) : (
+            // Below 1280px there isn't a reliable way to size the frame's
+            // chrome against the remaining space after this page's own top
+            // bars (dvh-based sizing doesn't know about sibling heights), so
+            // the toggle view skips the bezel and just fills the available
+            // area — same treatment /app itself uses under 600px.
+            <div className="h-full w-full max-w-md" key={`phone-mobile-${resetKey}`}>
+              <PhoneFrame bare>
+                <CustomerApp />
+              </PhoneFrame>
+            </div>
+          )}
         </div>
 
-        <div className="flex w-[66%] min-h-0 flex-1 py-4 pr-4">
-          <ScaledPanel designWidth={CONSOLE_DESIGN_WIDTH} designHeight={CONSOLE_DESIGN_HEIGHT}>
-            <div className="h-full w-full overflow-hidden rounded-3xl border border-line shadow-xl" key={`console-${resetKey}`}>
+        <div
+          className={
+            isSplitView
+              ? "flex w-[66%] min-h-0 flex-1 py-4 pr-4"
+              : mobileSide === "console"
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+                : "hidden"
+          }
+        >
+          {isSplitView ? (
+            <ScaledPanel designWidth={CONSOLE_DESIGN_WIDTH} designHeight={CONSOLE_DESIGN_HEIGHT}>
+              <div className="h-full w-full overflow-hidden rounded-3xl border border-line shadow-xl" key={`console-${resetKey}`}>
+                <ConsoleView embedded />
+              </div>
+            </ScaledPanel>
+          ) : (
+            <div className="min-h-0 flex-1 overflow-hidden" key={`console-mobile-${resetKey}`}>
               <ConsoleView embedded />
             </div>
-          </ScaledPanel>
+          )}
         </div>
 
         {/* Pulse — flashes across the boundary between phone and console on an approval or reservation */}
         <AnimatePresence>
-          {pulse && (
+          {pulse && isSplitView && (
             <motion.div
               key={pulse.id}
               className="pointer-events-none absolute inset-y-0 z-40 w-1.5 bg-gradient-to-b from-transparent via-matcha to-transparent"

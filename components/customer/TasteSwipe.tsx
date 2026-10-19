@@ -137,7 +137,7 @@ export function TasteSwipe({ onSeeMatches }: TasteSwipeProps) {
             onClick={onSeeMatches}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1.5 rounded-full bg-matcha px-4 py-2 text-sm font-semibold text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-matcha px-4 py-2 text-sm font-semibold text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             See my matches <ArrowRight size={15} />
           </motion.button>
@@ -154,19 +154,19 @@ export function TasteSwipe({ onSeeMatches }: TasteSwipeProps) {
 
 function IngredientCardFace({ ingredient }: { ingredient: Ingredient }) {
   return (
-    <div className="flex h-full flex-col rounded-3xl bg-forest p-5 text-oat shadow-[0_12px_30px_-12px_rgba(24,33,26,0.45)]">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl bg-forest p-5 text-oat shadow-[0_12px_30px_-12px_rgba(24,33,26,0.45)]">
+      <div className="flex shrink-0 items-center justify-between">
         <span className="mono-label text-matcha">INGREDIENT</span>
         <span className="rounded-full bg-oat/10 px-2.5 py-1 text-xs">
           {ingredient.diet === "veg" ? "Veg" : "Non-veg"}
         </span>
       </div>
       <div className="flex min-h-0 flex-1 items-center justify-center py-3">
-        <LeafCircle className="h-full max-h-[190px] w-auto" />
+        <LeafCircle className="h-full max-h-[160px] w-auto" />
       </div>
-      <h2 className="font-display text-[2.5rem] font-extrabold leading-none">{ingredient.name}</h2>
-      <p className="mt-2 text-sm text-oat/75">{ingredient.notes.join(" · ")}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <h2 className="font-display shrink-0 text-[2rem] font-extrabold leading-none">{ingredient.name}</h2>
+      <p className="mt-2 shrink-0 text-sm text-oat/75">{ingredient.notes.join(" · ")}</p>
+      <div className="mt-3 flex shrink-0 flex-wrap gap-2">
         <span className="rounded-full border border-oat/25 px-2.5 py-1 text-xs">
           In dishes at {ingredient.cafeCount} {ingredient.cafeCount === 1 ? "café" : "cafés"}
         </span>

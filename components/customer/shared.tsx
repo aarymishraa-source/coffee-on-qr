@@ -98,7 +98,7 @@ export function Sheet({ open, onClose, children, dark = false }: SheetProps) {
           <motion.div
             role="dialog"
             aria-modal="true"
-            className={`relative rounded-t-3xl px-6 pb-8 pt-5 ${dark ? "bg-espresso text-oat" : "bg-oat text-espresso"}`}
+            className={`relative max-h-[90dvh] overflow-y-auto rounded-t-3xl px-6 pb-8 pt-5 ${dark ? "bg-espresso text-oat" : "bg-oat text-espresso"}`}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -109,7 +109,7 @@ export function Sheet({ open, onClose, children, dark = false }: SheetProps) {
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-line/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest"
+              className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:bg-line/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest"
             >
               <X size={16} />
             </button>

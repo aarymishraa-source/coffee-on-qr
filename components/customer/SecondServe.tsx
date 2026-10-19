@@ -174,18 +174,20 @@ export function SecondServe({ onManage, onViewOrder }: SecondServeProps) {
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-oat/70">
-        {profile.whatsappOptIn
-          ? "You opted in to Second Serve alerts on WhatsApp. "
-          : "Second Serve alerts on WhatsApp are off. "}
+      <div className="mt-4 text-xs text-oat/70">
+        <p>
+          {profile.whatsappOptIn
+            ? "You opted in to Second Serve alerts on WhatsApp."
+            : "Second Serve alerts on WhatsApp are off."}
+        </p>
         <button
           type="button"
           onClick={onManage}
-          className="text-matcha underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-matcha"
+          className="inline-flex min-h-11 items-center text-matcha underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-matcha"
         >
           Manage
         </button>
-      </p>
+      </div>
 
       <ReserveSuccessSheet
         open={pickupCode !== null}

@@ -91,7 +91,7 @@ export function DishDetail({ dishId, onBack, onViewOrder }: DishDetailProps) {
               type="button"
               aria-label="About storage monitoring"
               onClick={() => setInfoOpen(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-matcha/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest"
+              className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-matcha/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest"
             >
               <Info size={17} />
             </button>
@@ -132,7 +132,7 @@ export function DishDetail({ dishId, onBack, onViewOrder }: DishDetailProps) {
                 type="button"
                 aria-pressed={slot === s}
                 onClick={() => setSlot(s)}
-                className={`rounded-2xl py-3.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${
+                className={`min-h-11 rounded-2xl py-3.5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${
                   slot === s ? "border-2 border-espresso font-semibold" : "border border-line"
                 }`}
               >

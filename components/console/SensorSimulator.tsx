@@ -28,13 +28,13 @@ export function SensorSimulator() {
         </span>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
         <label className="flex flex-col gap-1.5 text-sm">
           <MonoLabel>Batch</MonoLabel>
           <select
             value={selectedId}
             onChange={(e) => setSelectedId(e.target.value)}
-            className="rounded-xl border border-line bg-oat px-3 py-2 text-sm text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
+            className="max-xl:min-h-11 rounded-xl border border-line bg-oat px-3 py-2 text-base text-espresso focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest"
           >
             {batchList.map((b) => (
               <option key={b.id} value={b.id}>

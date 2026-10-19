@@ -71,10 +71,10 @@ export function PickedForYou({ onBack, onOpenDish, onOpenMap }: PickedForYouProp
       <p className="mt-2 text-sm text-muted">Ranked by your taste and what&apos;s actually in stock right now.</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Chip onClick={() => toggle("veg")} active={filters.veg}>Veg only</Chip>
-        <Chip onClick={() => toggle("under")} active={filters.under}>Under {formatRupees(profile.budget)}</Chip>
-        <Chip onClick={() => toggle("lessSpicy")} active={filters.lessSpicy}>Less spicy</Chip>
-        <Chip onClick={() => toggle("openNow")} active={filters.openNow}>Open now</Chip>
+        <Chip touchSize="always" onClick={() => toggle("veg")} active={filters.veg}>Veg only</Chip>
+        <Chip touchSize="always" onClick={() => toggle("under")} active={filters.under}>Under {formatRupees(profile.budget)}</Chip>
+        <Chip touchSize="always" onClick={() => toggle("lessSpicy")} active={filters.lessSpicy}>Less spicy</Chip>
+        <Chip touchSize="always" onClick={() => toggle("openNow")} active={filters.openNow}>Open now</Chip>
       </div>
 
       <ul className="mt-4 flex flex-col gap-3">

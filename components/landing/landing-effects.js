@@ -193,7 +193,7 @@ export function initLanding(root) {
         bar.style.width = (p * 100) + "%";
       }
       if (!hasGsap || reduce) { setActive(1); return; }
-      mm.add("(min-width: 900px)", function () {
+      mm.add("(min-width: 900px) and (min-height: 600px)", function () {
         var dist = function () { return Math.max(0, track.scrollWidth - window.innerWidth); };
         gsap.to(track, {
           x: function () { return -dist(); }, ease: "none",
@@ -203,7 +203,7 @@ export function initLanding(root) {
           }
         });
       });
-      mm.add("(max-width: 899px)", function () {
+      mm.add("(max-width: 899px), (max-height: 599px)", function () {
         steps.forEach(function (s, i) {
           ScrollTrigger.create({ trigger: s, start: "top 70%", onEnter: function () { s.classList.add("on"); bar.style.width = ((i + 1) / steps.length * 100) + "%"; } });
         });

@@ -7,6 +7,8 @@ interface LogoProps {
   onDark?: boolean;
   size?: number;
   className?: string;
+  /** Hides the wordmark below the xl breakpoint (1280px) via CSS only, e.g. for the console's icon-rail sidebar. */
+  hideWordmarkBelowXl?: boolean;
 }
 
 export function Logo({
@@ -15,6 +17,7 @@ export function Logo({
   onDark = true,
   size = 36,
   className = "",
+  hideWordmarkBelowXl = false,
 }: LogoProps) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
@@ -36,7 +39,7 @@ export function Logo({
         />
       </svg>
       {withWordmark && (
-        <div className="flex flex-col leading-none">
+        <div className={`flex-col leading-none ${hideWordmarkBelowXl ? "hidden xl:flex" : "flex"}`}>
           <span className={`font-display font-extrabold text-[1.05rem] ${onDark ? "text-oat" : "text-espresso"}`}>
             coffee <span className="text-matcha">on</span> qr
           </span>

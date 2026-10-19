@@ -17,8 +17,10 @@ const variantClasses: Record<Variant, string> = {
   danger: "bg-signal text-oat hover:bg-signal/90",
 };
 
+// "sm" gets a touch-friendly minimum height below the desktop breakpoint
+// (1280px) — at 1280px+ it's pixel-identical to before.
 const sizeClasses: Record<Size, string> = {
-  sm: "text-sm px-3.5 py-1.5 gap-1.5",
+  sm: "text-sm px-3.5 py-1.5 gap-1.5 max-xl:min-h-11",
   md: "text-sm px-5 py-3 gap-2",
   lg: "text-base px-6 py-3.5 gap-2",
 };

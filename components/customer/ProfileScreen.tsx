@@ -87,12 +87,12 @@ export function ProfileScreen() {
           aria-checked={profile.whatsappOptIn}
           aria-labelledby="wa-label"
           onClick={toggleWhatsapp}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${
+          className={`relative flex h-11 w-[3.25rem] shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${
             profile.whatsappOptIn ? "bg-forest" : "bg-line"
           }`}
         >
           <span
-            className={`absolute top-1 h-5 w-5 rounded-full bg-oat shadow transition-all ${
+            className={`absolute h-7 w-7 rounded-full bg-oat shadow transition-all ${
               profile.whatsappOptIn ? "left-6" : "left-1"
             }`}
           />

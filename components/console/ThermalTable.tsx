@@ -23,6 +23,19 @@ function windowLeftLabel(status: ThermalStatus, minutes: number | null): string 
   return formatMinutesShort(minutes);
 }
 
+function DebtBar({ status, pct }: { status: ThermalStatus; pct: number }) {
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-line">
+      <motion.div
+        className={`h-full rounded-full ${BAR_COLOR[status]}`}
+        initial={false}
+        animate={{ width: `${pct * 100}%` }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      />
+    </div>
+  );
+}
+
 interface ThermalTableProps {
   batches: BatchState[];
   now: Date;
@@ -31,14 +44,60 @@ interface ThermalTableProps {
 }
 
 export function ThermalTable({ batches, now, selectedId, onSelectRow }: ThermalTableProps) {
+  const rows = batches.map((batch) => {
+    const thermal = getBatchThermal(batch, now);
+    const pct = Math.min(1, Math.max(0, thermal.pct));
+    return { batch, thermal, pct };
+  });
+
   return (
-    <Card tone="oat" className="flex flex-col gap-4 p-5 md:p-6">
+    <Card tone="oat" className="flex flex-col gap-4 p-4 sm:p-5 md:p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="font-display text-lg font-bold">Batches · Thermal Debt</h2>
-        <span className="text-xs text-muted">Cumulative time–temperature exposure vs configured window</span>
+        <span className="hidden text-xs text-muted sm:inline">
+          Cumulative time–temperature exposure vs configured window
+        </span>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Stacked cards — below md (768px) */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {rows.map(({ batch, thermal, pct }) => {
+          const isSelected = selectedId === batch.id;
+          return (
+            <button
+              key={batch.id}
+              type="button"
+              data-batch-row={batch.id}
+              onClick={() => onSelectRow(batch.id)}
+              className={`flex flex-col gap-3 rounded-xl border p-4 text-left transition-colors ${
+                isSelected ? "border-forest bg-paper" : "border-line bg-oat"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium text-espresso">{batch.name}</div>
+                  <div className="font-mono text-xs text-muted">
+                    #{batch.id} · prep {batch.prepLabel}
+                  </div>
+                </div>
+                <StatusChip status={thermal.status} />
+              </div>
+              <div className="flex items-center justify-between gap-4 text-sm">
+                <span className="font-mono text-espresso">
+                  {batch.probeOffline ? "—" : formatTemp(thermal.currentTemp)}
+                </span>
+                <span className="font-mono text-xs text-muted">
+                  {windowLeftLabel(thermal.status, thermal.windowLeftMinutes)}
+                </span>
+              </div>
+              <DebtBar status={thermal.status} pct={pct} />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Table — md (768px) and up */}
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="mono-label border-b border-line text-left text-muted">
@@ -50,13 +109,12 @@ export function ThermalTable({ batches, now, selectedId, onSelectRow }: ThermalT
             </tr>
           </thead>
           <tbody>
-            {batches.map((batch) => {
-              const thermal = getBatchThermal(batch, now);
-              const pct = Math.min(1, Math.max(0, thermal.pct));
+            {rows.map(({ batch, thermal, pct }) => {
               const isSelected = selectedId === batch.id;
               return (
                 <tr
                   key={batch.id}
+                  data-batch-row={batch.id}
                   onClick={() => onSelectRow(batch.id)}
                   className={`cursor-pointer border-b border-line/70 last:border-0 transition-colors hover:bg-paper ${
                     isSelected ? "bg-paper" : ""
@@ -72,13 +130,8 @@ export function ThermalTable({ batches, now, selectedId, onSelectRow }: ThermalT
                     {batch.probeOffline ? "—" : formatTemp(thermal.currentTemp)}
                   </td>
                   <td className="py-3 pr-4">
-                    <div className="h-2 w-28 overflow-hidden rounded-full bg-line">
-                      <motion.div
-                        className={`h-full rounded-full ${BAR_COLOR[thermal.status]}`}
-                        initial={false}
-                        animate={{ width: `${pct * 100}%` }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                      />
+                    <div className="w-28">
+                      <DebtBar status={thermal.status} pct={pct} />
                     </div>
                   </td>
                   <td className="py-3 pr-4 font-mono text-xs text-muted">

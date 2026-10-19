@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "selfcheck": "tsx scripts/selfcheck.ts",
-    "shoot": "node scripts/shoot.mjs"
+    "shoot": "node scripts/shoot.mjs",
+    "responsive": "node scripts/responsive.mjs"
   },
   "dependencies": {
     "framer-motion": "^14.3.0",
