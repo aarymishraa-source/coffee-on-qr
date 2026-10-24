@@ -5,7 +5,7 @@ import { actorFor, createTestDb } from "../helpers/db";
 import { handleFarmerMessage } from "@/server/services/assistant.service";
 import { sendOffer } from "@/server/services/demand.service";
 import { runAssistantAgent } from "@/server/assistant/agent";
-import { __setModelForTests, classifyModelError } from "@/server/integrations/langchain/model";
+import { __setModelForTests, classifyModelError, DEFAULT_MODELS, getChatModel, GOOGLE_MAX_RETRIES } from "@/server/integrations/langchain/model";
 import { env, llmProvider } from "@/lib/env";
 
 // The real Gemini client (LangChain) against a mocked Google endpoint: checks
@@ -35,7 +35,7 @@ function mockGemini(turns: Array<(req: Captured) => Response | Promise<Response>
 const answerTool = (req: Captured): string =>
   (req.body.tools?.[0]?.functionDeclarations ?? []).map((f: { name: string }) => f.name).find((n: string) => n.startsWith("extract"));
 
-const gemini = () => new ChatGoogleGenerativeAI({ apiKey: "test-gemini-key", model: "gemini-2.5-flash", maxRetries: 0 });
+const gemini = () => new ChatGoogleGenerativeAI({ apiKey: "test-gemini-key", model: DEFAULT_MODELS.google, maxRetries: 0 });
 
 let db: PrismaClient;
 let n = 0;
@@ -112,6 +112,44 @@ describe("assistant with Gemini (mocked HTTP)", () => {
     expect(JSON.stringify(r.reply?.payload)).not.toContain("test-gemini-key");
   });
 
+  test("Gemini busy (503) is labelled busy and retried once, not until the timeout", async () => {
+    // The production model from getChatModel(), so its real retry setting is exercised.
+    __setModelForTests(undefined);
+    for (const k of ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_MODEL", "GEMINI_MODEL"]) vi.stubEnv(k, "");
+    vi.stubEnv("GOOGLE_API_KEY", "test-gemini-key");
+    const requests = mockGemini([
+      () =>
+        new Response(
+          JSON.stringify({ error: { code: 503, message: "This model is currently experiencing high demand. Please try again later.", status: "UNAVAILABLE" } }),
+          { status: 503 },
+        ),
+    ]);
+    const sunita = await actorFor(db, "user-sunita");
+    const started = Date.now();
+    const r = await handleFarmerMessage(db, sunita, { farmerId: "farmer-sunita", text: "नमस्ते", source: "CHAT", clientKey: key() });
+    expect(GOOGLE_MAX_RETRIES).toBe(1);
+    expect(requests).toHaveLength(1 + GOOGLE_MAX_RETRIES);
+    expect(requests[0].url).toContain("gemini-3.5-flash-lite");
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(r.reply?.isDemoReply).toBe(true);
+    expect(r.reply?.payload).toMatchObject({ fallback: "model_error", modelError: "busy" });
+  }, 15_000);
+
+  test("a retired or unknown model is a rejected request, never a live reply", async () => {
+    __setModelForTests(gemini());
+    mockGemini([
+      () =>
+        new Response(
+          JSON.stringify({ error: { code: 404, message: "This model models/gemini-old is no longer available to new users.", status: "NOT_FOUND" } }),
+          { status: 404 },
+        ),
+    ]);
+    const sunita = await actorFor(db, "user-sunita");
+    const r = await handleFarmerMessage(db, sunita, { farmerId: "farmer-sunita", text: "नमस्ते", source: "CHAT", clientKey: key() });
+    expect(r.reply?.isDemoReply).toBe(true);
+    expect(r.reply?.payload).toMatchObject({ fallback: "model_error", modelError: "bad_request" });
+  });
+
   test("a malformed answer (no structured reply) falls back instead of storing it", async () => {
     __setModelForTests(gemini());
     mockGemini([() => geminiResponse([{ text: "Free text instead of the required answer tool call." }])]);
@@ -162,11 +200,27 @@ describe("provider selection from environment", () => {
     expect(env().GOOGLE_API_KEY).toBe("preferred");
   });
 
+  test("Google defaults to gemini-3.5-flash-lite; GOOGLE_MODEL overrides it", async () => {
+    __setModelForTests(undefined);
+    for (const k of ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_MODEL", "GEMINI_MODEL"]) vi.stubEnv(k, "");
+    vi.stubEnv("GOOGLE_API_KEY", "abc");
+    const def = await getChatModel();
+    expect(def?.provider).toBe("google");
+    const g = def!.model as ChatGoogleGenerativeAI;
+    expect(g.model).toBe("gemini-3.5-flash-lite");
+    vi.stubEnv("GOOGLE_MODEL", "gemini-custom");
+    expect(((await getChatModel())!.model as ChatGoogleGenerativeAI).model).toBe("gemini-custom");
+  });
+
   test("errors are bucketed without echoing the provider message", () => {
     expect(classifyModelError(new Error("[GoogleGenerativeAI Error]: Error fetching from https://x: [403 Forbidden] API key not valid"))).toBe("auth");
     expect(classifyModelError(new Error("[429 Too Many Requests] Resource has been exhausted (e.g. check quota)."))).toBe("quota");
     expect(classifyModelError(new Error("[400 Bad Request] Invalid JSON payload received."))).toBe("bad_request");
     expect(classifyModelError(new Error("fetch failed"))).toBe("network");
+    expect(classifyModelError(new Error("[503 Service Unavailable] The model is overloaded. Please try again later."))).toBe("busy");
+    expect(classifyModelError(Object.assign(new Error("high demand"), { status: 503 }))).toBe("busy");
+    expect(classifyModelError(new Error("[404 Not Found] models/x is unavailable to this user"))).toBe("bad_request");
+    expect(classifyModelError(new Error("[500 Internal Server Error] An internal error has occurred."))).toBe("network");
     expect(classifyModelError(Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" }))).toBe("timeout");
   });
 });

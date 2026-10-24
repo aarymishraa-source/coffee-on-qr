@@ -27,6 +27,7 @@ const WALLPAPER =
 const MODEL_ERROR_LABEL: Record<string, string> = {
   auth: "API key rejected",
   quota: "quota or rate limit",
+  busy: "AI service busy, try again shortly",
   bad_request: "request rejected",
   timeout: "timed out",
   network: "provider unreachable",
@@ -172,7 +173,7 @@ function Bubble({
           {m.isDemoReply && (
             <span
               className="rounded border border-dashed border-hairline px-1 py-px"
-              title={m.payload.fallback === "model_error" ? "The AI model call failed, so the rule-based demo assistant answered. Details are in the server log." : undefined}
+              title={m.payload.modelError === "busy" ? "The AI service is busy right now. Please try again shortly." : m.payload.fallback === "model_error" ? "The AI model call failed, so the rule-based demo assistant answered. Details are in the server log." : undefined}
             >
               {m.payload.fallback === "model_error" ? `Demo reply · AI unavailable (${MODEL_ERROR_LABEL[String(m.payload.modelError)] ?? "error"})` : "Demo reply"}
             </span>

@@ -54,7 +54,9 @@ export type Env = z.infer<typeof schema>;
 let cached: Env | null = null;
 
 export function env(): Env {
-  if (!cached || process.env.NODE_ENV === "test") {
+  // Only production caches: `next dev` reloads process.env when .env.local
+  // changes, and a stale cache would keep reporting "no key" until restart.
+  if (!cached || process.env.NODE_ENV !== "production") {
     const e = schema.parse(process.env);
     cached = { ...e, GOOGLE_API_KEY: e.GOOGLE_API_KEY ?? e.GEMINI_API_KEY, GOOGLE_MODEL: e.GOOGLE_MODEL ?? e.GEMINI_MODEL };
   }

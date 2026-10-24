@@ -7,8 +7,13 @@ import { env, llmProvider } from "@/lib/env";
 export const DEFAULT_MODELS = {
   anthropic: "claude-sonnet-5-5",
   openai: "gpt-4.1-mini",
-  google: "gemini-2.5-flash",
+  google: "gemini-3.5-flash-lite",
 } as const;
+
+// LangChain's AsyncCaller retries 5xx/429 up to 6 times with backoff by
+// default, which lets a busy Gemini (503) eat the whole agent timeout.
+// One retry rides out a blip; past that, fail fast and say "busy".
+export const GOOGLE_MAX_RETRIES = 1;
 
 let override: BaseChatModel | null | undefined;
 
@@ -35,7 +40,7 @@ export async function getChatModel(): Promise<{ model: BaseChatModel; provider: 
     case "google": {
       const { ChatGoogleGenerativeAI } = await import("@langchain/google-genai");
       return {
-        model: new ChatGoogleGenerativeAI({ apiKey: e.GOOGLE_API_KEY, model: e.GOOGLE_MODEL ?? DEFAULT_MODELS.google }),
+        model: new ChatGoogleGenerativeAI({ apiKey: e.GOOGLE_API_KEY, model: e.GOOGLE_MODEL ?? DEFAULT_MODELS.google, maxRetries: GOOGLE_MAX_RETRIES }),
         provider: "google",
       };
     }
@@ -44,7 +49,7 @@ export async function getChatModel(): Promise<{ model: BaseChatModel; provider: 
   }
 }
 
-export type ModelErrorKind = "auth" | "quota" | "bad_request" | "timeout" | "network" | "bad_output" | "unknown";
+export type ModelErrorKind = "auth" | "quota" | "busy" | "bad_request" | "timeout" | "network" | "bad_output" | "unknown";
 
 /**
  * Buckets a provider failure so the chat can say why a reply fell back
@@ -58,6 +63,9 @@ export function classifyModelError(err: unknown): ModelErrorKind {
   if (e?.name === "TimeoutError" || e?.name === "AbortError" || /abort|timed? ?out/i.test(msg)) return "timeout";
   if (status === 401 || status === 403 || /api[_ ]?key|permission|unauthori[sz]ed|PERMISSION_DENIED|UNAUTHENTICATED/i.test(msg)) return "auth";
   if (status === 429 || /quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(msg)) return "quota";
+  // Google answers 503 UNAVAILABLE ("model is overloaded" / "high demand") when it is out of capacity.
+  // A 4xx (e.g. 404 "model no longer available") is never "busy", whatever its wording.
+  if (status === 503 || (!(status >= 400 && status < 500) && /overloaded|high demand|UNAVAILABLE|Service Unavailable/.test(msg))) return "busy";
   if (status === 400 || status === 404 || /INVALID_ARGUMENT|not found/i.test(msg)) return "bad_request";
   if (e?.name === "ZodError" || /StructuredOutput|parse|JSON/i.test(msg)) return "bad_output";
   if (/fetch failed|ECONN|ENOTFOUND|ETIMEDOUT|network/i.test(msg) || (status >= 500 && status < 600)) return "network";
