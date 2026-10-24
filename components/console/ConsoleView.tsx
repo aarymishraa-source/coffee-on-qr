@@ -75,6 +75,16 @@ export function ConsoleView({ embedded = false }: ConsoleViewProps) {
           </div>
         ) : activeTab === "audit" ? (
           <AuditLog />
+        ) : activeTab === "forecast" ? (
+          <div className="flex flex-col items-start gap-3 rounded-2xl border border-line bg-oat p-6 md:p-8">
+            <h2 className="font-display text-2xl font-extrabold">Ingredient demand forecast</h2>
+            <p className="max-w-lg text-sm text-muted">
+              Next week&apos;s ingredient need, calculated from café orders and recipes — and sent as orders to farmer groups through Kisan Sahayak.
+            </p>
+            <a href="/console/supply" className="rounded-full bg-espresso px-5 py-3 text-sm font-medium text-oat hover:bg-espresso/90">
+              Open supply forecast
+            </a>
+          </div>
         ) : (
           <ComingInPilot title={TAB_TITLES[activeTab]} />
         )}

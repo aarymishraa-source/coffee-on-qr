@@ -54,15 +54,13 @@ export function MessageList({ detail, pending, typing, showTranslations, canAnsw
   // Farmer messages count as read once the assistant has answered after them.
   const lastOutAt = [...detail.messages].reverse().find((m) => m.direction === "OUT")?.createdAt ?? "";
 
-  let lastDay = "";
   return (
     <div className="flex-1 overflow-y-auto bg-chat-wallpaper px-3 py-4 md:px-[6%]" style={{ backgroundImage: WALLPAPER }} aria-live="polite">
       <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
         {detail.messages.map((m, i) => {
           const day = dayLabel(m.createdAt);
-          const showDay = day !== lastDay;
-          lastDay = day;
           const prev = detail.messages[i - 1];
+          const showDay = !prev || dayLabel(prev.createdAt) !== day;
           const firstInGroup = !prev || prev.direction !== m.direction || showDay;
           return (
             <div key={m.id}>

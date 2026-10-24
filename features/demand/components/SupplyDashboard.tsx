@@ -22,7 +22,12 @@ export function SupplyDashboard() {
   });
 
   const rows = q.data?.rows ?? [];
-  const headline = rows.find((r) => r.farmSourced && r.open > 0) ?? rows[0];
+  // Follow the ingredient with offer activity in the last 2 hours (so a just-filled
+  // order stays in view); otherwise the most valuable open need.
+  const recent = (r: SupplyRow) =>
+    Math.max(0, ...[r.offer?.sentAt, ...(r.offer?.commitments.map((c) => c.at) ?? [])].filter(Boolean).map((t) => Date.parse(t!)));
+  const active = rows.filter((r) => r.offer && q.dataUpdatedAt - recent(r) < 2 * 3600_000).sort((a, b) => recent(b) - recent(a))[0];
+  const headline = active ?? rows.find((r) => r.farmSourced && r.open > 0) ?? rows[0];
   const selected = rows.find((r) => r.ingredientId === selectedId) ?? null;
   const f = q.data?.forecast;
 
@@ -112,7 +117,7 @@ function Headline({ row, onReview }: { row: SupplyRow; onReview: () => void }) {
 function IngredientTable({ rows, onSelect }: { rows: SupplyRow[]; onSelect: (id: string) => void }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-hairline bg-surface">
-      <table className="w-full min-w-[760px] text-sm">
+      <table className="w-full min-w-[760px] whitespace-nowrap text-sm">
         <thead>
           <tr className="border-b border-hairline text-left text-xs text-muted-foreground">
             <th className="px-4 py-3 font-normal">Ingredient</th>

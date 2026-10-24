@@ -29,7 +29,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen-safe bg-background text-foreground">
         <ShellNav nav={nav} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-background/95 px-4 backdrop-blur md:px-8">
+          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-background px-4 md:px-8">
             <MobileNav nav={nav} />
             <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
               <span className="inline-flex items-center rounded-full border border-dashed border-hairline px-2.5 py-0.5 text-xs">

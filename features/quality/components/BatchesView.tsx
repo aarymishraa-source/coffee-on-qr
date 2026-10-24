@@ -61,7 +61,7 @@ export function BatchesView() {
         ) : q.data.length === 0 ? (
           <EmptyState title="No harvests logged yet" body="When a farmer logs a harvest from the chat, it appears here for grade review and pickup." />
         ) : (
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[760px] whitespace-nowrap text-sm">
             <thead>
               <tr className="border-b border-hairline text-left text-xs text-muted-foreground">
                 <th className="px-4 py-3 font-normal">Batch</th>

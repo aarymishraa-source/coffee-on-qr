@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "node tests/e2e/run.mjs",
+    "test:e2e": "node tests/e2e/demo-path.mjs",
     "postinstall": "prisma generate && tsx scripts/embed-migrations.ts",
     "db:generate": "sh scripts/db-generate.sh",
     "db:deploy": "prisma migrate deploy",

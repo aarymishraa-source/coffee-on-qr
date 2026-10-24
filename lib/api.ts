@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { ZodError, type ZodType } from "zod";
 import { logger } from "@/lib/logger";
 
@@ -29,6 +30,7 @@ export function route<Args extends unknown[]>(fn: (...args: Args) => Promise<Res
     try {
       return await fn(...args);
     } catch (err) {
+      unstable_rethrow(err); // let Next handle its own control-flow errors (prerender bail-outs, redirects)
       if (err instanceof ApiError) return fail(err.status, err.code, err.message);
       if (err instanceof ZodError) {
         const first = err.issues[0];

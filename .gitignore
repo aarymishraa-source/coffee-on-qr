@@ -51,3 +51,6 @@ AGENTS.md
 
 # local embedded database
 /.data
+
+# example env is committed
+!.env.example

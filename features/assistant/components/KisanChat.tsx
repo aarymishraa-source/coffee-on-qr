@@ -17,7 +17,7 @@ import { ConversationList } from "./ConversationList";
 import { MessageList, type PendingMessage } from "./MessageList";
 import { Composer } from "./Composer";
 import { ContextPanel } from "./ContextPanel";
-import { Avatar } from "./Avatar";
+import { AssistantAvatar, Avatar } from "./Avatar";
 
 interface Props {
   role: "ADMIN" | "FPO_MANAGER" | "FIELD_AGENT" | "FARMER";
@@ -172,7 +172,7 @@ export function KisanChat({ role, userName }: Props) {
                 </Button>
               )}
               <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => (window.innerWidth >= 1280 ? setPanelOpen((v) => !v) : setSheetOpen(true))}>
-                <Avatar name={d.farmer.name} size={40} />
+                {isFarmer ? <AssistantAvatar size={40} /> : <Avatar name={d.farmer.name} size={40} />}
                 <span className="min-w-0">
                   <span className="block truncate text-[15px] font-medium">{isFarmer ? "Kisan Sahayak" : d.farmer.name}</span>
                   <span className="block truncate text-xs text-muted-foreground">

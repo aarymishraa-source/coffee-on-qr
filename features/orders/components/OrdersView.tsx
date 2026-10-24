@@ -51,7 +51,7 @@ export function OrdersView() {
         ) : q.data.length === 0 ? (
           <EmptyState title="No orders yet" body="Send an offer from the supply forecast to start one." />
         ) : (
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[760px] whitespace-nowrap text-sm">
             <thead>
               <tr className="border-b border-hairline text-left text-xs text-muted-foreground">
                 <th className="w-8 px-2 py-3" />

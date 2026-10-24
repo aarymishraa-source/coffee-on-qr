@@ -218,7 +218,10 @@ export async function seedDemoData(db: Db) {
     });
     for (const c of commits) {
       await db.farmerCommitment.create({
-        data: { offerId: offer.id, farmerId: c.farmerId, quantity: c.qty === "all" ? f.suggested : c.qty, status: "COMMITTED", source: "CHAT" },
+        data: {
+          offerId: offer.id, farmerId: c.farmerId, quantity: c.qty === "all" ? f.suggested : c.qty, status: "COMMITTED", source: "CHAT",
+          createdAt: ist(addDays(today, -sentDaysAgo), 11), updatedAt: ist(addDays(today, -sentDaysAgo), 11),
+        },
       });
     }
     return offer;
@@ -237,7 +240,7 @@ export async function seedDemoData(db: Db) {
     },
   });
   const prevCommit = await db.farmerCommitment.create({
-    data: { offerId: prevOffer.id, farmerId: "farmer-ganesh", quantity: 30, status: "COMMITTED", source: "WHATSAPP", createdAt: ist(addDays(lastWeek, -1), 11) },
+    data: { offerId: prevOffer.id, farmerId: "farmer-ganesh", quantity: 30, status: "COMMITTED", source: "WHATSAPP", createdAt: ist(addDays(lastWeek, -1), 11), updatedAt: ist(addDays(lastWeek, -1), 11) },
   });
   const prevBatch = await db.harvestBatch.create({
     data: {
