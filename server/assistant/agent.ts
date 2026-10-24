@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { createAgent, tool } from "langchain";
+import { createAgent, tool, toolStrategy } from "langchain";
 import { AIMessage, HumanMessage, type BaseMessage } from "@langchain/core/messages";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import {
@@ -41,7 +41,7 @@ function buildTools(ctx: AssistantContext, actions: AgentResult["actions"]) {
       schema: z.object({
         offerId: z.string().optional(),
         action: z.enum(["accept", "commit", "decline"]),
-        quantityKg: z.number().positive().optional(),
+        quantityKg: z.number().optional().describe("Kilograms, greater than 0. Required for action=commit."),
       }),
     }),
     tool(async () => json(await getHarvestPlan(ctx)), {
@@ -62,7 +62,7 @@ function buildTools(ctx: AssistantContext, actions: AgentResult["actions"]) {
     tool(async ({ query, crop }) => json(searchAgriKnowledge(ctx, query, crop)), {
       name: "searchAgriKnowledge",
       description: "Search the curated, general crop-care notes. Use only these for agricultural advice and cite the source.",
-      schema: z.object({ query: z.string(), crop: z.string().nullable().optional() }),
+      schema: z.object({ query: z.string(), crop: z.string().optional() }),
     }),
     tool(async ({ reason }) => record("escalateToExpert", await escalateToExpert(ctx, reason)), {
       name: "escalateToExpert",
@@ -72,12 +72,16 @@ function buildTools(ctx: AssistantContext, actions: AgentResult["actions"]) {
   ];
 }
 
+/** A model call that hangs longer than this falls back to the demo assistant. */
+export const AGENT_TIMEOUT_MS = 45_000;
+
 export async function runAssistantAgent(
   ctx: AssistantContext,
   model: BaseChatModel,
   history: BaseMessage[],
   text: string,
-  farmerName: string
+  farmerName: string,
+  opts: { timeoutMs?: number } = {}
 ): Promise<AgentResult> {
   const actions: AgentResult["actions"] = [];
   const agent = createAgent({
@@ -88,10 +92,16 @@ export async function runAssistantAgent(
       language: ctx.language,
       today: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" }),
     }),
-    responseFormat: assistantReplySchema,
+    // The final answer is returned through a tool call rather than the
+    // provider's JSON mode: Gemini 2.x can't combine JSON mode with tools.
+    responseFormat: toolStrategy(assistantReplySchema),
   });
-  const res = await agent.invoke({ messages: [...history, new HumanMessage(text)] }, { recursionLimit: 12 });
+  const res = await agent.invoke(
+    { messages: [...history, new HumanMessage(text)] },
+    { recursionLimit: 12, signal: AbortSignal.timeout(opts.timeoutMs ?? AGENT_TIMEOUT_MS) }
+  );
   const parsed = assistantReplySchema.parse(res.structuredResponse);
+  if (!parsed.reply.trim()) throw new Error("Model returned an empty reply");
   return { ...parsed, actions };
 }
 

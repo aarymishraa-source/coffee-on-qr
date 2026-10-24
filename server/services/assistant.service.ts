@@ -4,7 +4,7 @@ import type { Db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import type { Actor } from "@/server/auth/types";
 import { assertFarmerAccess } from "@/server/auth/access";
-import { getChatModel } from "@/server/integrations/langchain/model";
+import { classifyModelError, getChatModel, type ModelErrorKind } from "@/server/integrations/langchain/model";
 import { runAssistantAgent, toHistory } from "@/server/assistant/agent";
 import { fallbackReply } from "@/server/assistant/fallback";
 import type { AssistantContext } from "@/server/assistant/business-tools";
@@ -84,6 +84,7 @@ export async function handleFarmerMessage(db: Db, actor: Actor, input: InboundIn
   let text: string;
   let isDemoReply = false;
   let note: string | undefined;
+  let modelError: ModelErrorKind | undefined;
   const llm = await getChatModel();
   if (llm) {
     try {
@@ -93,7 +94,12 @@ export async function handleFarmerMessage(db: Db, actor: Actor, input: InboundIn
         await db.message.update({ where: { id: inbound.id }, data: { translation: r.farmer_message_english } });
       }
     } catch (err) {
-      logger.warn("assistant: model call failed, using fallback", { error: err instanceof Error ? err.message : String(err) });
+      modelError = classifyModelError(err);
+      logger.warn("assistant: model call failed, using fallback", {
+        provider: llm.provider,
+        kind: modelError,
+        error: err instanceof Error ? err.message.slice(0, 300) : String(err).slice(0, 300),
+      });
       text = (await fallbackReply(ctx, input.text)).reply;
       isDemoReply = true;
       note = "model_error";
@@ -110,7 +116,7 @@ export async function handleFarmerMessage(db: Db, actor: Actor, input: InboundIn
     author: "ASSISTANT",
     body: text || T.dontKnow(lang),
     isDemoReply,
-    payload: note ? { fallback: note } : undefined,
+    payload: note ? { fallback: note, ...(modelError ? { modelError, provider: llm?.provider } : {}) } : undefined,
   });
   return { inbound, reply, duplicate: false };
 }

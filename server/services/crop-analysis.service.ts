@@ -8,7 +8,7 @@ import type { Actor } from "@/server/auth/types";
 import { assertFarmerAccess } from "@/server/auth/access";
 import { getChatModel } from "@/server/integrations/langchain/model";
 import { cropAnalysisPrompt } from "@/server/assistant/prompts";
-import { cropAnalysisSchema, type CropAnalysisResult } from "@/server/assistant/schemas";
+import { cropAnalysisSchema, parseCropAnalysis, type CropAnalysisResult } from "@/server/assistant/schemas";
 import { audit } from "./audit.service";
 import { postMessage } from "./conversation.service";
 import { T, type Lang } from "./i18n";
@@ -73,7 +73,7 @@ export async function analyseCropPhoto(db: Db, actor: Actor, input: AnalyseInput
       try {
         const { bytes, mimeType } = await readMediaBytes(db, media.id);
         const structured = llm.model.withStructuredOutput(cropAnalysisSchema, { name: "crop_photo_assessment" });
-        result = cropAnalysisSchema.parse(
+        result = parseCropAnalysis(
           await structured.invoke([
             new HumanMessage({
               content: [

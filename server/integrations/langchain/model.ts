@@ -43,3 +43,23 @@ export async function getChatModel(): Promise<{ model: BaseChatModel; provider: 
       return null;
   }
 }
+
+export type ModelErrorKind = "auth" | "quota" | "bad_request" | "timeout" | "network" | "bad_output" | "unknown";
+
+/**
+ * Buckets a provider failure so the chat can say why a reply fell back
+ * ("AI unavailable — API key rejected") without echoing provider messages,
+ * which can contain request details.
+ */
+export function classifyModelError(err: unknown): ModelErrorKind {
+  const e = err as { name?: string; status?: number; message?: string } | null;
+  const msg = String(e?.message ?? err ?? "");
+  const status = e?.status ?? Number(/\[(\d{3})\b/.exec(msg)?.[1] ?? /\b(4\d\d|5\d\d)\b/.exec(msg)?.[1] ?? NaN);
+  if (e?.name === "TimeoutError" || e?.name === "AbortError" || /abort|timed? ?out/i.test(msg)) return "timeout";
+  if (status === 401 || status === 403 || /api[_ ]?key|permission|unauthori[sz]ed|PERMISSION_DENIED|UNAUTHENTICATED/i.test(msg)) return "auth";
+  if (status === 429 || /quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(msg)) return "quota";
+  if (status === 400 || status === 404 || /INVALID_ARGUMENT|not found/i.test(msg)) return "bad_request";
+  if (e?.name === "ZodError" || /StructuredOutput|parse|JSON/i.test(msg)) return "bad_output";
+  if (/fetch failed|ECONN|ENOTFOUND|ETIMEDOUT|network/i.test(msg) || (status >= 500 && status < 600)) return "network";
+  return "unknown";
+}

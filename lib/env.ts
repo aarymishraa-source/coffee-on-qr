@@ -23,6 +23,9 @@ const schema = z.object({
   OPENAI_TTS_MODEL: optional,
   GOOGLE_API_KEY: optional,
   GOOGLE_MODEL: optional,
+  // Google AI Studio calls it a "Gemini API key"; accept either name.
+  GEMINI_API_KEY: optional,
+  GEMINI_MODEL: optional,
   SARVAM_API_KEY: optional,
 
   CLOUDINARY_CLOUD_NAME: optional,
@@ -51,7 +54,10 @@ export type Env = z.infer<typeof schema>;
 let cached: Env | null = null;
 
 export function env(): Env {
-  if (!cached || process.env.NODE_ENV === "test") cached = schema.parse(process.env);
+  if (!cached || process.env.NODE_ENV === "test") {
+    const e = schema.parse(process.env);
+    cached = { ...e, GOOGLE_API_KEY: e.GOOGLE_API_KEY ?? e.GEMINI_API_KEY, GOOGLE_MODEL: e.GOOGLE_MODEL ?? e.GEMINI_MODEL };
+  }
   return cached;
 }
 

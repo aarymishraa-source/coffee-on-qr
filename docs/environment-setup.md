@@ -32,7 +32,8 @@ All variables are listed in `.env.example`. Status is visible to admins at `/con
 
 | Feature | Variables |
 |---|---|
-| Assistant + vision | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` or `GOOGLE_API_KEY` (+ optional `*_MODEL`) |
+| Assistant + vision | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` or `GOOGLE_API_KEY` (Gemini; `GEMINI_API_KEY` also works) (+ optional `*_MODEL`). If several are set, Anthropic wins, then OpenAI, then Google. |
+| | Restart `npm run dev` after editing `.env.local`. A failed model call is shown in chat as "Demo reply · AI unavailable (reason)"; details are in the server log. |
 | Speech | `SARVAM_API_KEY` (preferred for hi/mr) or `OPENAI_API_KEY` |
 | Images | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` |
 | WhatsApp | see `docs/whatsapp-setup.md` |

@@ -60,6 +60,7 @@ export async function respondToActiveOffer(
   ctx: AssistantContext,
   input: { offerId?: string; action: "accept" | "commit" | "decline"; quantityKg?: number }
 ) {
+  if (input.quantityKg !== undefined && !(input.quantityKg > 0)) return { ok: false as const, message: "quantityKg must be greater than 0." };
   const offers = await getFarmerOffers(ctx.db, ctx.farmerId);
   const offer = input.offerId ? offers.find((o) => o.id === input.offerId) : offers.find((o) => o.open > 0) ?? offers[0];
   if (!offer) return { ok: false as const, message: T.noActiveOrder(ctx.language) };

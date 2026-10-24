@@ -23,6 +23,17 @@ export interface PendingMessage {
 const WALLPAPER =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%232E4A2C' stroke-opacity='0.06' stroke-width='1.5'%3E%3Cpath d='M20 40c0-12 9-20 21-21-1 12-9 21-21 21Z'/%3E%3Cpath d='M20 40 33 27'/%3E%3Cpath d='M80 95c0-10 8-17 18-18-1 10-8 18-18 18Z'/%3E%3Cpath d='M80 95l11-11'/%3E%3Ccircle cx='95' cy='25' r='3'/%3E%3Ccircle cx='35' cy='92' r='2'/%3E%3C/g%3E%3C/svg%3E\")";
 
+// Why a reply fell back to the demo assistant (see classifyModelError).
+const MODEL_ERROR_LABEL: Record<string, string> = {
+  auth: "API key rejected",
+  quota: "quota or rate limit",
+  bad_request: "request rejected",
+  timeout: "timed out",
+  network: "provider unreachable",
+  bad_output: "unreadable answer",
+  unknown: "error",
+};
+
 function dayLabel(iso: string) {
   const d = new Date(iso);
   const key = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
@@ -158,7 +169,14 @@ function Bubble({
           <p className="mt-1 border-t border-primary/10 pt-1 text-xs italic text-muted-foreground">{m.translation}</p>
         )}
         <div className={cn("mt-0.5 flex items-center justify-end gap-1.5 text-[11px] leading-none text-muted-foreground", card && "mt-2")}>
-          {m.isDemoReply && <span className="rounded border border-dashed border-hairline px-1 py-px">Demo reply</span>}
+          {m.isDemoReply && (
+            <span
+              className="rounded border border-dashed border-hairline px-1 py-px"
+              title={m.payload.fallback === "model_error" ? "The AI model call failed, so the rule-based demo assistant answered. Details are in the server log." : undefined}
+            >
+              {m.payload.fallback === "model_error" ? `Demo reply · AI unavailable (${MODEL_ERROR_LABEL[String(m.payload.modelError)] ?? "error"})` : "Demo reply"}
+            </span>
+          )}
           {m.payload.transcriptSource === "browser" && <span>Transcribed in browser</span>}
           {m.agentAssisted && <span>Sent by agent</span>}
           {m.channel === "WHATSAPP" && <span>WhatsApp</span>}

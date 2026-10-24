@@ -27,3 +27,5 @@ One line each, newest last.
 - WhatsApp templates (needed to message farmers outside the 24-hour window) are not implemented; offers reach farmers through the portal, or over WhatsApp within the window.
 - The supply headline follows the ingredient with offer activity in the last 2 hours, so a just-filled order stays in view during the demo.
 - The existing console's "Demand forecast" tab links to the new supply forecast instead of "Coming in pilot".
+- The assistant agent returns its final answer through a tool call (`toolStrategy`), not provider JSON mode: Gemini 2.x rejects JSON mode combined with function calling. Model-facing schemas avoid nullable unions and exclusive bounds (Gemini rejects them); values are validated after parsing instead.
+- `GEMINI_API_KEY` is accepted as an alias for `GOOGLE_API_KEY`. A failed model call falls back to the demo assistant with a 45 s timeout, and the reply is labelled "Demo reply · AI unavailable (reason)"; only the error category is stored, the provider message goes to the server log.

@@ -41,7 +41,7 @@ export function integrationStatus(): IntegrationRow[] {
       detail: llm
         ? `${llm} · ${llm === "anthropic" ? (e.ANTHROPIC_MODEL ?? DEFAULT_MODELS.anthropic) : llm === "openai" ? (e.OPENAI_MODEL ?? DEFAULT_MODELS.openai) : (e.GOOGLE_MODEL ?? DEFAULT_MODELS.google)} via LangChain`
         : "Rule-based demo assistant; photo checks and grades are labelled demo examples",
-      vars: ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY"],
+      vars: ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY (or GEMINI_API_KEY)"],
       doc: "docs/environment-setup.md",
     },
     {
