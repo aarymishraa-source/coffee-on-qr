@@ -1,0 +1,575 @@
+// Coffee on QR · Kisan Sahayak data model.
+// Café sales + recipes drive ingredient forecasts → demand offers → farmer
+// commitments → harvest batches → payments. See docs/architecture.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  CAFE_MANAGER
+  FPO_MANAGER
+  FIELD_AGENT
+  FARMER
+}
+
+enum Language {
+  en
+  hi
+  mr
+}
+
+enum CropStage {
+  SOWING
+  VEGETATIVE
+  FLOWERING
+  HARVEST_READY
+  HARVESTED
+}
+
+enum ContactPreference {
+  WHATSAPP
+  CALL
+  SMS
+}
+
+enum OfferStatus {
+  DRAFT
+  OFFERED
+  ACCEPTED
+  PARTIALLY_COMMITTED
+  FULFILLED
+  CANCELLED
+}
+
+enum CommitmentStatus {
+  COMMITTED
+  DECLINED
+  WITHDRAWN
+}
+
+enum ResponseSource {
+  CHAT
+  VOICE
+  WHATSAPP
+  CONSOLE
+}
+
+enum MessageDirection {
+  IN
+  OUT
+}
+
+enum MessageAuthor {
+  FARMER
+  ASSISTANT
+  STAFF
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  OFFER
+  CROP_ANALYSIS
+  BATCH
+  PAYMENT
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum Channel {
+  PORTAL
+  WHATSAPP
+}
+
+enum Grade {
+  A
+  B
+  C
+}
+
+enum ReviewStatus {
+  PENDING
+  CONFIRMED
+  CORRECTED
+}
+
+enum PickupStatus {
+  SCHEDULED
+  PICKED_UP
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+}
+
+enum PaymentProvider {
+  CASHFREE
+  SIMULATED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  NOT_STARTED
+  SIMULATED
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  isDemo       Boolean  @default(false)
+  cafeId       String?
+  fpoId        String?
+  farmerId     String?  @unique
+  fieldAgentId String?  @unique
+  createdAt    DateTime @default(now())
+
+  cafe       Cafe?       @relation(fields: [cafeId], references: [id])
+  fpo        Fpo?        @relation(fields: [fpoId], references: [id])
+  farmer     Farmer?     @relation(fields: [farmerId], references: [id])
+  fieldAgent FieldAgent? @relation(fields: [fieldAgentId], references: [id])
+}
+
+model Cafe {
+  id     String  @id
+  name   String
+  area   String
+  lat    Float
+  lng    Float
+  isDemo Boolean @default(false)
+
+  menuItems   MenuItem[]
+  stockLevels StockLevel[]
+  salesOrders SalesOrder[]
+  users       User[]
+  batches     HarvestBatch[]
+}
+
+model Ingredient {
+  id         String  @id
+  name       String
+  nameHi     String?
+  nameMr     String?
+  unit       String // purchasing unit, always "kg" or "l" — recipe quantities are grams / ml
+  perishable Boolean @default(true)
+  farmSourced Boolean @default(true) // bought from farmers/FPOs (false: dairy or other suppliers)
+  pricePerKg Int // indicative farm-gate price, ₹ per unit
+
+  recipes     RecipeIngredient[]
+  stockLevels StockLevel[]
+  forecasts   DemandForecast[]
+  offers      DemandOffer[]
+}
+
+model MenuItem {
+  id     String  @id // matches lib/seed.ts dish ids where the dish exists in the customer app
+  cafeId String
+  name   String
+  price  Int
+  active Boolean @default(true)
+
+  cafe       Cafe               @relation(fields: [cafeId], references: [id])
+  recipe     RecipeIngredient[]
+  salesItems SalesOrderItem[]
+}
+
+model RecipeIngredient {
+  id           String @id @default(cuid())
+  menuItemId   String
+  ingredientId String
+  quantity     Float // grams (or ml) per serving
+
+  menuItem   MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([menuItemId, ingredientId])
+}
+
+model StockLevel {
+  id           String   @id @default(cuid())
+  cafeId       String
+  ingredientId String
+  quantity     Float // in the ingredient's purchasing unit
+  updatedAt    DateTime @updatedAt
+
+  cafe       Cafe       @relation(fields: [cafeId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([cafeId, ingredientId])
+}
+
+model SalesOrder {
+  id       String   @id @default(cuid())
+  cafeId   String
+  placedAt DateTime
+  channel  String   @default("qr")
+  isDemo   Boolean  @default(false)
+
+  cafe  Cafe             @relation(fields: [cafeId], references: [id])
+  items SalesOrderItem[]
+
+  @@index([cafeId, placedAt])
+}
+
+model SalesOrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  unitPrice  Int
+
+  order    SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem MenuItem   @relation(fields: [menuItemId], references: [id])
+
+  @@index([menuItemId])
+}
+
+model Fpo {
+  id       String  @id
+  name     String
+  district String
+  state    String
+  isDemo   Boolean @default(false)
+
+  farmers     Farmer[]
+  fieldAgents FieldAgent[]
+  users       User[]
+  offers      DemandOffer[]
+  batches     HarvestBatch[]
+}
+
+model FieldAgent {
+  id     String  @id @default(cuid())
+  name   String
+  phone  String  @unique
+  fpoId  String
+  isDemo Boolean @default(false)
+
+  fpo     Fpo      @relation(fields: [fpoId], references: [id])
+  farmers Farmer[]
+  user    User?
+}
+
+model Farmer {
+  id                String            @id @default(cuid())
+  name              String
+  phone             String            @unique // E.164 digits, no "+"
+  language          Language          @default(hi)
+  village           String
+  district          String
+  fpoId             String?
+  fieldAgentId      String?
+  areaAcres         Float?
+  lat               Float?
+  lng               Float?
+  contactPreference ContactPreference @default(WHATSAPP)
+  consentData       Boolean           @default(false)
+  consentFarmStory  Boolean           @default(false)
+  consentAt         DateTime?
+  isDemo            Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  fpo          Fpo?               @relation(fields: [fpoId], references: [id])
+  fieldAgent   FieldAgent?        @relation(fields: [fieldAgentId], references: [id])
+  crops        FarmerCrop[]
+  conversation Conversation?
+  commitments  FarmerCommitment[]
+  cropImages   CropImage[]
+  analyses     CropAnalysis[]
+  batches      HarvestBatch[]
+  payouts      Payout[]
+  user         User?
+}
+
+model FarmerCrop {
+  id                  String    @id @default(cuid())
+  farmerId            String
+  crop                String // ingredient id where it maps to one (e.g. "basil")
+  stage               CropStage
+  expectedHarvestDate DateTime?
+  expectedQtyKg       Float?
+
+  farmer Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id            String   @id @default(cuid())
+  farmerId      String   @unique
+  lastMessageAt DateTime @default(now())
+  unreadCount   Int      @default(0)
+
+  farmer   Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  messages Message[]
+}
+
+model Message {
+  id                String           @id @default(cuid())
+  conversationId    String
+  direction         MessageDirection // IN = from the farmer, OUT = to the farmer
+  author            MessageAuthor
+  type              MessageType      @default(TEXT)
+  body              String
+  translation       String? // English rendering of a farmer message
+  language          Language?
+  payload           Json?
+  status            MessageStatus    @default(SENT)
+  channel           Channel          @default(PORTAL)
+  providerMessageId String?          @unique
+  isDemoReply       Boolean          @default(false)
+  sentByUserId      String? // staff user who typed it on the farmer's behalf (agent-assisted)
+  clientKey         String?          @unique // client idempotency key
+  mediaId           String?
+  createdAt         DateTime         @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// Stored media (images and voice notes). Bytes live in Cloudinary when it is
+// configured, otherwise in this table so the demo works on any host.
+model Media {
+  id        String   @id @default(cuid())
+  kind      String // "image" | "audio"
+  mimeType  String
+  bytes     Int
+  storage   String // "cloudinary" | "database"
+  url       String?
+  data      Bytes?
+  isDemo    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model CropImage {
+  id             String   @id @default(cuid())
+  farmerId       String
+  conversationId String?
+  mediaId        String
+  crop           String?
+  createdAt      DateTime @default(now())
+
+  farmer   Farmer        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  analysis CropAnalysis?
+}
+
+model CropAnalysis {
+  id                String    @id @default(cuid())
+  cropImageId       String    @unique
+  farmerId          String
+  result            Json
+  provider          String // "anthropic" | "openai" | "google" | "demo"
+  isDemo            Boolean
+  language          Language
+  expertRequestedAt DateTime?
+  createdAt         DateTime  @default(now())
+
+  cropImage CropImage @relation(fields: [cropImageId], references: [id], onDelete: Cascade)
+  farmer    Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+}
+
+model DemandForecast {
+  id           String   @id @default(cuid())
+  ingredientId String
+  weekStart    DateTime
+  forecastQty  Float
+  bufferQty    Float
+  stockQty     Float
+  suggestedQty Float
+  adjustedQty  Float?
+  method       String
+  breakdown    Json
+  createdAt    DateTime @default(now())
+
+  ingredient  Ingredient           @relation(fields: [ingredientId], references: [id])
+  adjustments ForecastAdjustment[]
+  offers      DemandOffer[]
+
+  @@unique([ingredientId, weekStart])
+}
+
+model ForecastAdjustment {
+  id         String   @id @default(cuid())
+  forecastId String
+  fromQty    Float
+  toQty      Float
+  reason     String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  forecast DemandForecast @relation(fields: [forecastId], references: [id], onDelete: Cascade)
+}
+
+model DemandOffer {
+  id           String      @id @default(cuid())
+  ingredientId String
+  forecastId   String?
+  fpoId        String
+  quantity     Float
+  pricePerKg   Int
+  neededBy     DateTime
+  status       OfferStatus @default(DRAFT)
+  createdById  String
+  sentAt       DateTime?
+  isDemo       Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  ingredient  Ingredient         @relation(fields: [ingredientId], references: [id])
+  forecast    DemandForecast?    @relation(fields: [forecastId], references: [id])
+  fpo         Fpo                @relation(fields: [fpoId], references: [id])
+  commitments FarmerCommitment[]
+  payments    Payment[]
+}
+
+model FarmerCommitment {
+  id             String           @id @default(cuid())
+  offerId        String
+  farmerId       String
+  quantity       Float
+  status         CommitmentStatus
+  source         ResponseSource
+  idempotencyKey String?          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  offer   DemandOffer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  farmer  Farmer         @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  batches HarvestBatch[]
+  payouts Payout[]
+
+  // One live answer per farmer per offer — a repeat reply updates it.
+  @@unique([offerId, farmerId])
+}
+
+model HarvestBatch {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  commitmentId   String
+  farmerId       String
+  fpoId          String
+  cafeId         String
+  crop           String
+  harvestDate    DateTime
+  quantity       Float
+  mediaIds       String[]
+  prelimGrade    Grade
+  gradeReasons   String[]
+  gradeSource    String // "vision-model" | "demo"
+  reviewStatus   ReviewStatus   @default(PENDING)
+  finalGrade     Grade?
+  pickupStatus   PickupStatus   @default(SCHEDULED)
+  deliveryStatus DeliveryStatus @default(PENDING)
+  deliveredAt    DateTime?
+  isDemo         Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  commitment FarmerCommitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+  farmer     Farmer           @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  fpo        Fpo              @relation(fields: [fpoId], references: [id])
+  cafe       Cafe             @relation(fields: [cafeId], references: [id])
+  reviews    QualityReview[]
+}
+
+model QualityReview {
+  id         String   @id @default(cuid())
+  batchId    String
+  reviewerId String
+  fromGrade  Grade
+  toGrade    Grade
+  reason     String
+  createdAt  DateTime @default(now())
+
+  batch HarvestBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+}
+
+// Money collected from the café for an offer (Cashfree PG). Farmer payouts
+// are a separate model — collecting a payment never implies a payout.
+model Payment {
+  id               String          @id @default(cuid())
+  offerId          String
+  amount           Int
+  currency         String          @default("INR")
+  provider         PaymentProvider
+  providerOrderId  String          @unique
+  paymentSessionId String?
+  providerPaymentId String?
+  status           PaymentStatus   @default(PENDING)
+  lastVerifiedAt   DateTime?
+  raw              Json?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  offer DemandOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+}
+
+model Payout {
+  id           String       @id @default(cuid())
+  commitmentId String
+  farmerId     String
+  amount       Int
+  provider     String // "simulated" | "cashfree-payouts"
+  status       PayoutStatus @default(NOT_STARTED)
+  reference    String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  commitment FarmerCommitment @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+  farmer     Farmer           @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@unique([commitmentId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  payload     Json
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+
+  @@unique([provider, eventId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String
+  actorRole  String
+  action     String
+  entityType String
+  entityId   String
+  detail     Json?
+  isDemo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}

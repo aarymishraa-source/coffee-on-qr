@@ -45,3 +45,9 @@ AGENTS.md
 
 # screenshot harness output
 /shots
+
+# prisma client (generated on install/build)
+/lib/generated
+
+# local embedded database
+/.data
