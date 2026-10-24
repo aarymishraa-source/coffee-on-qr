@@ -7,6 +7,7 @@ import { DishIllustration } from "@/components/illustrations/Food";
 import { DISH_BY_ID, INGREDIENT_BY_ID } from "@/lib/seed";
 import { useLiveNow, useStore } from "@/lib/store";
 import { formatClock, formatRupees } from "@/lib/format";
+import { FarmStory } from "./FarmStory";
 import { ReserveSuccessSheet, Sheet, brewPointsFor, cafeLine, liveStock, stockLabel } from "./shared";
 
 const SLOTS = ["In 15 min", "7:00 PM", "7:30 PM"];
@@ -123,6 +124,8 @@ export function DishDetail({ dishId, onBack, onViewOrder }: DishDetailProps) {
               {dish.allergenWarning}
             </p>
           )}
+
+          <FarmStory dishId={dish.id} />
 
           <MonoLabel className="mt-5 block">PICK UP</MonoLabel>
           <div className="mt-2 grid grid-cols-3 gap-2">
